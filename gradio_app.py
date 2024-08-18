@@ -46,9 +46,9 @@ from llm_config import (
 PDF_TEST_FILE_PATH = "text_example_en.pdf"
 text_example_path = PDF_TEST_FILE_PATH
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
-EMBEDDING_MODEL_NAME = "embedding_model"
+EMBEDDING_MODEL_NAME = "ojjsaw/embedding_model"
 EMBEDDING_BATCH_SIZE = 4
-RERANKING_MODEL_NAME = "reranking_model"
+RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
 RERANK_TOP_N = 2
 DEVICE = "CPU"
 OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "NUM_STREAMS": "1", "CACHE_DIR": "" }

@@ -1,12 +1,15 @@
 # ask-me-anything
 
 ```sh
-python3 -m venv openvino_env
-source openvino_env/bin/activate
+python3 -m venv openvino_prod
+source openvino_prod/bin/activate
 python -m pip install --upgrade pip
 
 # TODO: prevent nvidia installs by manual override of torch cpu installation
 pip install -r requirements.txt
+
+pip install -r requirements-prod.txt #shrink by 3.5GB
+
 ```
 ### Embedding Model
 ```sh
@@ -36,6 +39,13 @@ huggingface-cli download "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
 ```sh
 du -h {PATH_TO_DIR}
 huggingface-cli scan-cache
+huggingface-cli download ojjsaw/reranking_model --token ?
+huggingface-cli download ojjsaw/embedding_model --token ?
+huggingface-cli login --token ?
+
+# docker gets stuck on running
+docker build -t ojjsaw/ask-me-anything .
+docker run -e HF_TOKEN=? -p 7860:7860 ojjsaw/ask-me-anything
 ```
 
 ### better configs

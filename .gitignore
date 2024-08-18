@@ -1,4 +1,4 @@
-openvino_env/
+openvino_*/
 embedding_model*/
 reranking_model*/
 
