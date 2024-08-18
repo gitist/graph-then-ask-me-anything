@@ -43,9 +43,6 @@ from llm_config import (
     SUPPORTED_LLM_MODELS,
 )
 
-DEFAULT_RAG_PROMPT = """
-You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\
-"""
 PDF_TEST_FILE_PATH = "text_example_en.pdf"
 text_example_path = PDF_TEST_FILE_PATH
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
