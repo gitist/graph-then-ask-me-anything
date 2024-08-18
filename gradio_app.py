@@ -46,14 +46,6 @@ from llm_config import (
 PDF_TEST_FILE_PATH = "text_example_en.pdf"
 text_example_path = PDF_TEST_FILE_PATH
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
-RAG_PROMPT_TEMPLATE = """
-<|system|> {DEFAULT_RAG_PROMPT }<|end|>
-<|user|>
-Question: {input} 
-Context: {context} 
-Answer: <|end|>
-<|assistant|>
-"""
 EMBEDDING_MODEL_NAME = "embedding_model"
 EMBEDDING_BATCH_SIZE = 4
 RERANKING_MODEL_NAME = "reranking_model"
@@ -378,7 +370,7 @@ with gr.Blocks(
 
                 chunk_size = gr.Slider(
                     label="Chunk size",
-                    value=400,
+                    value=150,
                     minimum=50,
                     maximum=2000,
                     step=50,
@@ -458,7 +450,7 @@ with gr.Blocks(
                             )
         with gr.Column(scale=4):
             chatbot = gr.Chatbot(
-                height=800,
+                height=300,
                 label="Step 3: Input Query",
             )
             with gr.Row():
@@ -513,7 +505,7 @@ with gr.Blocks(
                         vector_rerank_top_n = gr.Slider(
                             1,
                             10,
-                            value=2,
+                            value=7,
                             step=1,
                             label="Rerank top n",
                             info="Number of rerank results",
@@ -523,7 +515,7 @@ with gr.Blocks(
                         vector_search_top_k = gr.Slider(
                             1,
                             50,
-                            value=10,
+                            value=15,
                             step=1,
                             label="Search top k",
                             info="Search top k must >= Rerank top n",
