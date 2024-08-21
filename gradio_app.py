@@ -51,7 +51,7 @@ EMBEDDING_BATCH_SIZE = 4
 RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
 RERANK_TOP_N = 2
 DEVICE = "CPU"
-OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "NUM_STREAMS": "1", "CACHE_DIR": "" }
+OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": "" }
 
 llm_model_configuration = SUPPORTED_LLM_MODELS['English']['phi-3-mini-instruct']
 rag_prompt_template = llm_model_configuration["rag_prompt_template"]
@@ -111,7 +111,7 @@ core = ov.Core()
 
 embedding = OpenVINOBgeEmbeddings(
     model_name_or_path=EMBEDDING_MODEL_NAME,
-    model_kwargs={ "device": DEVICE, "compile": False },
+    model_kwargs={ "device": DEVICE, "compile": False, "PERFORMANCE_HINT": "LATENCY" },
     encode_kwargs={ "mean_pooling": False, "normalize_embeddings": True, "batch_size": EMBEDDING_BATCH_SIZE},
 )
 
@@ -119,7 +119,7 @@ embedding.ov_model.compile()
 
 reranker = OpenVINOReranker(
     model_name_or_path=RERANKING_MODEL_NAME,
-    model_kwargs={ "device": DEVICE },
+    model_kwargs={ "device": DEVICE, "PERFORMANCE_HINT": "LATENCY" },
     top_n=RERANK_TOP_N,
 )
 
@@ -582,6 +582,6 @@ demo.queue()
 # demo.launch(share=True)
 # it creates a publicly shareable link for the interface. Read more in the docs: https://gradio.app/docs/
 try:
-    demo.launch()
+    demo.launch(share=True)
 except Exception:
     demo.launch(share=True)
