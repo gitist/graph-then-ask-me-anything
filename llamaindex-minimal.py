@@ -30,7 +30,7 @@ RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
 RERANKING_TOP_N = 2
 
 # LLM CONFIG
-LLM_DEVICE = "CPU"# "CPU"
+LLM_DEVICE = "GPU"# "CPU"
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
 #LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int4-ov"
 #LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int8-ov"
