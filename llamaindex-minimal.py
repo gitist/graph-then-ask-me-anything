@@ -16,18 +16,26 @@ logging.basicConfig(level=logging.INFO)
 
 PDF_TEST_FILE_PATH = "xeon6-e-cores-network-and-edge-brief.pdf"
 
+# EMBEDDING CONFIG
 EMBEDDING_DEVICE = "CPU"
-RERANKING_DEVICE = "CPU"
-LLM_DEVICE = "GPU"
-OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": ""}
-MAX_NEW_TOKENS = 512
-CONTEXT_WINDOW = 127000
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 100
-LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
+EMBEDDING_CHUNK_SIZE = 500
+EMBEDDING_CHUNK_OVERLAP = 100
 EMBEDDING_MODEL_NAME = "ojjsaw/embedding_model"
-RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
 EMBEDDING_BATCH_SIZE = 4
+EMBEDDING_MAX_NEW_TOKENS = 512
+
+# RERANKING CONFIG
+RERANKING_DEVICE = "CPU"
+RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
+RERANKING_TOP_N = 2
+
+# LLM CONFIG
+LLM_DEVICE = "GPU"
+LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
+LLM_MAX_NEW_TOKENS = 512
+LLM_CONTEXT_WINDOW = 127000
+
+OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": ""}
 
 def messages_to_prompt(messages):
     prompt = ""
@@ -63,7 +71,7 @@ embedding = OpenVINOEmbedding(
     model_id_or_path=EMBEDDING_MODEL_NAME, 
     device=EMBEDDING_DEVICE,
     model_kwargs={"ov_config": OV_CONFIG, "trust_remote_code": True},
-    max_length=MAX_NEW_TOKENS,
+    max_length=EMBEDDING_MAX_NEW_TOKENS,
     embed_batch_size=EMBEDDING_BATCH_SIZE,
 )
 
@@ -76,8 +84,8 @@ reranker = OpenVINORerank(
 
 llm = OpenVINOLLM(
     model_id_or_path=LLM_MODEL_NAME,
-    context_window=CONTEXT_WINDOW,
-    max_new_tokens=MAX_NEW_TOKENS,
+    context_window=LLM_CONTEXT_WINDOW,
+    max_new_tokens=LLM_MAX_NEW_TOKENS,
     model_kwargs={"ov_config": OV_CONFIG, "trust_remote_code": True },
     generate_kwargs={
         "do_sample": True, 
@@ -101,8 +109,8 @@ llm = OpenVINOLLM(
 logging.info("Updating Settings")
 Settings.embed_model = embedding
 Settings.llm = llm
-Settings.chunk_size = CHUNK_SIZE
-Settings.chunk_overlap = CHUNK_OVERLAP
+Settings.chunk_size = EMBEDDING_CHUNK_SIZE
+Settings.chunk_overlap = EMBEDDING_CHUNK_OVERLAP
 
 logging.info("Initializing VectorStoreIndex and QueryEngine")
 loader = PyMuPDFReader()
@@ -111,7 +119,7 @@ vector_index = VectorStoreIndex.from_documents(documents)
 
 query_engine = vector_index.as_query_engine(
     streaming=True, 
-    similarity_top_k=2, 
+    similarity_top_k=RERANKING_TOP_N, 
     response_mode="compact", 
     node_postprocessors=[reranker]
 )
