@@ -56,3 +56,14 @@ similarity threshold 0.5
 rerank top n 7
 rerank top k 15
 ```
+# RAG AGENTs
+
+### Setup
+```sh
+python3 -m venv agents_env
+source agents_env/bin/activate
+python -m pip install --upgrade pip
+
+pip install -r requirements-agents.txt
+
+```
