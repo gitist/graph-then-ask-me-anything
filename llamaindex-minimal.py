@@ -30,10 +30,12 @@ RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
 RERANKING_TOP_N = 2
 
 # LLM CONFIG
-LLM_DEVICE = "CPU"# "GPU"
+LLM_DEVICE = "CPU"# "CPU"
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
+#LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int4-ov"
+#LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int8-ov"
 LLM_MAX_NEW_TOKENS = 256 # 512
-LLM_CONTEXT_WINDOW = 128000 #3900
+LLM_CONTEXT_WINDOW = 131072 #4096
 
 OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": ""}
 
@@ -55,11 +57,14 @@ def messages_to_prompt(messages):
     prompt += "<|assistant|>\n"
 
     if not system_found:
+        # prompt = (
+        #     "<|system|>\nYou are a helpful AI assistant.lol<|end|>\n" + prompt
+        # )
         prompt = (
-            "<|system|>\nYou are a helpful AI assistant.<|end|>\n" + prompt
+            "<|system|>\nYou are an expert Q&A system that is trusted around the world.\nAlways answer the query using the provided context information, and not prior knowledge.\nSome rules to follow:\n1. Never directly reference the given context in your answer.\n2. Avoid statements like 'Based on the context, ...' or 'The context information ...' or anything along those lines.<|end|>\n" + prompt
         )
 
-    #print(f"Prompt: {prompt}")
+    print(f"Prompt: {prompt}")
     return prompt
 
 def phi_completion_to_prompt(completion):
@@ -96,7 +101,7 @@ llm = OpenVINOLLM(
     device_map=LLM_DEVICE,
     query_wrapper_prompt=(
             "<|system|>\n"
-            "You are a helpful AI assistant.<|end|>\n"
+            "You are an expert Q&A system that is trusted around the world.\nAlways answer the query using the provided context information, and not prior knowledge.\nSome rules to follow:\n1. Never directly reference the given context in your answer.\n2. Avoid statements like 'Based on the context, ...' or 'The context information ...' or anything along those lines.<|end|>\n"
             "<|user|>\n"
             "{query_str}<|end|>\n"
             "<|assistant|>\n"
@@ -129,12 +134,14 @@ qa_prompt_tmpl_str = (
             "---------------------\n"
             "{context_str}\n"
             "---------------------\n"
-            "Given the context information and not prior knowledge, answer the query, incase case you don't know the answer say 'I don't know!'.\n"
+            "Given the context information and not prior knowledge, answer the query. Incase case you don't know the answer say 'I don't know!'.\n"
             "Query: {query_str}\n"
             "Answer: "
             )
 qa_prompt_tmpl = PromptTemplate(qa_prompt_tmpl_str)
 query_engine.update_prompts({"response_synthesizer:text_qa_template": qa_prompt_tmpl})
+#print(query_engine.get_prompts())
+#exit()
 # question = "what is the base power range of xeon 6 processors?"
 # logging.info("Querying the engine")
 # start_time = time.time()
