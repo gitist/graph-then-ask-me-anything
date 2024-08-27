@@ -15,4 +15,4 @@ huggingface-cli download ojjsaw/embedding_model --token $HF_TOKEN
 huggingface-cli download OpenVINO/Phi-3-mini-128k-instruct-int4-ov --token $HF_TOKEN
 
 # Start the Gradio app
-python3 gradio_app.py
+python3 llamaindex-minimal.py

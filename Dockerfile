@@ -17,18 +17,18 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy the requirements file
-COPY requirements-prod.txt .
+COPY requirements-agents.txt .
 
 # Create a virtual environment and install dependencies
 RUN python3 -m venv venv \
     && . venv/bin/activate \
     && pip install --upgrade pip \
-    && pip install -r requirements-prod.txt
+    && pip install -r requirements-agents.txt
 
 # Copy the rest of the application code
-COPY gradio_app.py .
+COPY llamaindex-minimal.py .
 COPY llm_config.py .
-COPY text_example_en.pdf .
+COPY xeon6-e-cores-network-and-edge-brief.pdf .
 COPY entrypoint.sh .
 # Make the entrypoint script executable
 RUN chmod +x /app/entrypoint.sh

@@ -16,7 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 PDF_TEST_FILE_PATH = "xeon6-e-cores-network-and-edge-brief.pdf"
 
-DEVICE = "CPU"
+EMBEDDING_DEVICE = "CPU"
+RERANKING_DEVICE = "CPU"
+LLM_DEVICE = "GPU"
 OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": ""}
 MAX_NEW_TOKENS = 512
 CONTEXT_WINDOW = 127000
@@ -49,7 +51,7 @@ def messages_to_prompt(messages):
             "<|system|>\nYou are a helpful AI assistant.<|end|>\n" + prompt
         )
 
-    print(f"Prompt: {prompt}")
+    #print(f"Prompt: {prompt}")
     return prompt
 
 def phi_completion_to_prompt(completion):
@@ -59,7 +61,7 @@ logging.info("Loading LLM and embedding models")
 core = ov.Core()
 embedding = OpenVINOEmbedding(
     model_id_or_path=EMBEDDING_MODEL_NAME, 
-    device=DEVICE,
+    device=EMBEDDING_DEVICE,
     model_kwargs={"ov_config": OV_CONFIG, "trust_remote_code": True},
     max_length=MAX_NEW_TOKENS,
     embed_batch_size=EMBEDDING_BATCH_SIZE,
@@ -67,7 +69,7 @@ embedding = OpenVINOEmbedding(
 
 reranker = OpenVINORerank(
     model_id_or_path=RERANKING_MODEL_NAME, 
-    device=DEVICE,
+    device=RERANKING_DEVICE,
     model_kwargs={"ov_config": OV_CONFIG, "trust_remote_code": True},
     top_n=2
 )
@@ -83,7 +85,7 @@ llm = OpenVINOLLM(
         #"top_k": 0, 
         #"top_p": 1.0 
         },
-    device_map=DEVICE,
+    device_map=LLM_DEVICE,
     query_wrapper_prompt=(
             "<|system|>\n"
             "You are a helpful AI assistant.<|end|>\n"
@@ -119,12 +121,20 @@ qa_prompt_tmpl_str = (
             "---------------------\n"
             "{context_str}\n"
             "---------------------\n"
-            "Given the context information above I want you to think step by step to answer the query in a crisp manner, incase case you don't know the answer say 'I don't know!'.\n"
+            "Given the context information and not prior knowledge, answer the query, incase case you don't know the answer say 'I don't know!'.\n"
             "Query: {query_str}\n"
             "Answer: "
             )
 qa_prompt_tmpl = PromptTemplate(qa_prompt_tmpl_str)
 query_engine.update_prompts({"response_synthesizer:text_qa_template": qa_prompt_tmpl})
+# question = "what is the base power range of xeon 6 processors?"
+# logging.info("Querying the engine")
+# start_time = time.time()
+# response = query_engine.query(question)
+# response.print_response_stream()
+# print("\n")
+# end_time = time.time()
+# logging.info(f"Execution time: {end_time - start_time} seconds")
 
 try:
     while True:

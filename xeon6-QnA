@@ -1,0 +1,48 @@
+What is the maximum number of cores per socket available on the Intel Xeon 6 processors with E-cores?
+
+The Intel Xeon 6 processors with E-cores feature up to 144 cores per socket.
+
+
+What are the benefits of Intel Xeon 6 processors with E-cores for network and edge workloads?
+
+They offer high throughput, power efficiency, enhanced parallel processing, built-in acceleration for encryption and compression, and improved security operations, among other benefits.
+
+
+Which technologies in Intel Xeon 6 processors enhance security for 5G networks and edge-to-cloud infrastructure?
+
+Intel Trust Domain Extensions (Intel TDX) and Intel Software Guard Extensions (Intel SGX) help secure applications and data in trusted execution environments.
+
+
+What is the range of Thermal Design Power (TDP) for Intel Xeon 6 processors with E-cores?
+
+The TDP ranges from 205W to 330W.
+
+
+What performance improvements do the Intel Xeon 6780E processors provide compared to the 2nd Gen Intel Xeon 8280 processors?
+
+The Intel Xeon 6780E provides up to 3.6x higher integer throughput performance and up to 2.3x higher integer throughput performance per watt.
+
+
+What built-in accelerators are included in Intel Xeon 6 processors with E-cores?
+
+Intel Data Streaming Accelerator (Intel DSA), Intel QuickAssist Technology (Intel QAT), Intel Dynamic Load Balancer (Intel DLB), and Intel In-Memory Analytics Accelerator (Intel IAA) are some of the built-in accelerators.
+
+
+What is the memory speed supported by Intel Xeon 6 processors with DDR5?
+
+They support DDR5 memory speeds up to 6400MT/s (1DPC) and 5200MT/s (2DPC).
+
+
+What type of workloads is the Intel Xeon 6 processor optimized for in the telecommunications sector?
+
+The processor is optimized for 5G core networks, control plane (CP), user plane functions (UPF), service mesh performance, and decreasing transaction latency.
+
+
+How do Intel Xeon 6 processors contribute to the sustainability of business operations?
+
+They drive higher performance-per-watt, use compute resources more efficiently at the edge, and contribute to reduced power consumption.
+
+
+Which technologies in the Intel Xeon 6 processors support AI inferencing workloads?
+
+Intel Advanced Vector Extensions (Intel AVX) and support for the OpenVINO toolkit accelerate AI inferencing workloads.
