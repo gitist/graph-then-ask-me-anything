@@ -7,6 +7,8 @@ from llama_index.core.tools import FunctionTool
 from llama_index.readers.file import PyMuPDFReader
 from llama_index.core import VectorStoreIndex, Settings
 from llama_index.core.tools import QueryEngineTool
+from llama_index.core import PromptTemplate
+
 import time
 import logging
 
@@ -18,8 +20,8 @@ DEVICE = "CPU"
 OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": ""}
 MAX_NEW_TOKENS = 512
 CONTEXT_WINDOW = 127000
-CHUNK_SIZE = 400
-CHUNK_OVERLAP = 50
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 100
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
 EMBEDDING_MODEL_NAME = "ojjsaw/embedding_model"
 RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
@@ -47,6 +49,7 @@ def messages_to_prompt(messages):
             "<|system|>\nYou are a helpful AI assistant.<|end|>\n" + prompt
         )
 
+    print(f"Prompt: {prompt}")
     return prompt
 
 def phi_completion_to_prompt(completion):
@@ -64,7 +67,8 @@ embedding = OpenVINOEmbedding(
 
 reranker = OpenVINORerank(
     model_id_or_path=RERANKING_MODEL_NAME, 
-    device=DEVICE, 
+    device=DEVICE,
+    model_kwargs={"ov_config": OV_CONFIG, "trust_remote_code": True},
     top_n=2
 )
 
@@ -76,8 +80,9 @@ llm = OpenVINOLLM(
     generate_kwargs={
         "do_sample": True, 
         "temperature": 0.1,
-        "top_k": 50, 
-        "top_p": 1.0 },
+        #"top_k": 0, 
+        #"top_p": 1.0 
+        },
     device_map=DEVICE,
     query_wrapper_prompt=(
             "<|system|>\n"
@@ -104,10 +109,22 @@ vector_index = VectorStoreIndex.from_documents(documents)
 
 query_engine = vector_index.as_query_engine(
     streaming=True, 
-    similarity_top_k=10, 
+    similarity_top_k=2, 
     response_mode="compact", 
     node_postprocessors=[reranker]
 )
+
+qa_prompt_tmpl_str = (
+            "Context information is below.\n"
+            "---------------------\n"
+            "{context_str}\n"
+            "---------------------\n"
+            "Given the context information above I want you to think step by step to answer the query in a crisp manner, incase case you don't know the answer say 'I don't know!'.\n"
+            "Query: {query_str}\n"
+            "Answer: "
+            )
+qa_prompt_tmpl = PromptTemplate(qa_prompt_tmpl_str)
+query_engine.update_prompts({"response_synthesizer:text_qa_template": qa_prompt_tmpl})
 
 try:
     while True:
@@ -124,4 +141,5 @@ try:
         logging.info(f"Execution time: {end_time - start_time} seconds")
 except KeyboardInterrupt:
     logging.info("Program stopped by user")
+    exit()
 
