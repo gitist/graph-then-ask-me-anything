@@ -33,10 +33,9 @@ RERANKING_TOP_N = 2
 LLM_DEVICE = "GPU"# "CPU"
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
 #LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int4-ov"
-#LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int8-ov"
 LLM_MAX_NEW_TOKENS = 256 # 512
 LLM_CONTEXT_WINDOW = 131072 #4096
-
+CUSTOM_SYSTEM_PROMPT = "<|system|>\nYou are an expert Q&A system that is trusted around the world.\nAlways answer the query using the provided context information, and not prior knowledge.\nSome rules to follow:\n1. Never directly reference the given context in your answer.\n2. Avoid statements like 'Based on the context, ...' or 'The context information ...' or anything along those lines.<|end|>\n"
 OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": ""}
 
 def messages_to_prompt(messages):
@@ -57,11 +56,8 @@ def messages_to_prompt(messages):
     prompt += "<|assistant|>\n"
 
     if not system_found:
-        # prompt = (
-        #     "<|system|>\nYou are a helpful AI assistant.lol<|end|>\n" + prompt
-        # )
         prompt = (
-            "<|system|>\nYou are an expert Q&A system that is trusted around the world.\nAlways answer the query using the provided context information, and not prior knowledge.\nSome rules to follow:\n1. Never directly reference the given context in your answer.\n2. Avoid statements like 'Based on the context, ...' or 'The context information ...' or anything along those lines.<|end|>\n" + prompt
+            CUSTOM_SYSTEM_PROMPT + prompt
         )
 
     print(f"Prompt: {prompt}")
@@ -100,9 +96,8 @@ llm = OpenVINOLLM(
         },
     device_map=LLM_DEVICE,
     query_wrapper_prompt=(
-            "<|system|>\n"
-            "You are an expert Q&A system that is trusted around the world.\nAlways answer the query using the provided context information, and not prior knowledge.\nSome rules to follow:\n1. Never directly reference the given context in your answer.\n2. Avoid statements like 'Based on the context, ...' or 'The context information ...' or anything along those lines.<|end|>\n"
-            "<|user|>\n"
+            "<|system|>\n" + CUSTOM_SYSTEM_PROMPT +
+            "<|user|>\n" +
             "{query_str}<|end|>\n"
             "<|assistant|>\n"
         ),
