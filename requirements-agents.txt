@@ -15,3 +15,5 @@ datasets
 accelerate
 openvino>=2024.2.0
 openvino-tokenizers[transformers]
+fastapi
+uvicorn

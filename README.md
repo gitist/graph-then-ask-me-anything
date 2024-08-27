@@ -34,6 +34,12 @@ optimum-cli export openvino --model "BAAI/bge-reranker-base" --task text-classif
 ### LLM Model
 ```sh
 huggingface-cli download "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
+
+#TODO:
+huggingface-cli download "microsoft/Phi-3.5-mini-instruct"
+optimum-cli export openvino --model "microsoft/Phi-3.5-mini-instruct" --task text-generation-with-past --trust-remote-code --weight-format int4 --group-size 128 --ratio 0.8 llm_model
+
+
 ```
 ### Utility Commands
 ```sh
