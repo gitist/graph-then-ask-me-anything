@@ -51,7 +51,14 @@ huggingface-cli login --token ?
 
 # docker gets stuck on running
 docker build -t ojjsaw/ask-me-anything .
-docker run -e HF_TOKEN=? -p 7860:7860 ojjsaw/ask-me-anything
+docker run --rm -p 8000:8000 ojjsaw/ask-me-anything
+
+curl -X 'POST' \
+  'http://127.0.0.1:8000/upload-pdf-vector-index' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@xeon6-e-cores-network-and-edge-brief.pdf;type=application/pdf'
+
 ```
 
 ### better configs
@@ -71,5 +78,17 @@ source agents_env/bin/activate
 python -m pip install --upgrade pip
 
 pip install -r requirements-agents.txt
+
+uvicorn fastapi-test:app --reload
+
+uvicorn llamaindex-minimal:app --reload
+
+curl -N -X 'POST' \
+  'http://127.0.0.1:8000/query' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "question": "What is the memory speed supported by Intel Xeon 6 processors with DDR5?"
+}'
 
 ```

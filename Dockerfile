@@ -30,11 +30,13 @@ COPY llamaindex-minimal.py .
 COPY llm_config.py .
 COPY xeon6-e-cores-network-and-edge-brief.pdf .
 COPY entrypoint.sh .
-# Make the entrypoint script executable
 RUN chmod +x /app/entrypoint.sh
 
-EXPOSE 7860
-ENV GRADIO_SERVER_NAME="0.0.0.0"
+# Activate the virtual environment and run the hugging-cli command
+RUN . venv/bin/activate \
+    && huggingface-cli download ojjsaw/reranking_model \
+    && huggingface-cli download ojjsaw/embedding_model \
+    && huggingface-cli download OpenVINO/Phi-3-mini-128k-instruct-int4-ov
 
 # Set the entrypoint script
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "-c", "source venv/bin/activate && uvicorn llamaindex-minimal:app --host 0.0.0.0"]

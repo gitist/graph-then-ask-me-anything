@@ -24,8 +24,6 @@ from fastapi.responses import StreamingResponse
 
 logging.basicConfig(level=logging.INFO)
 
-PDF_TEST_FILE_PATH = "xeon6-e-cores-network-and-edge-brief.pdf"
-
 # EMBEDDING CONFIG
 EMBEDDING_DEVICE = "CPU"
 EMBEDDING_CHUNK_SIZE = 900 #500
@@ -40,7 +38,7 @@ RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
 RERANKING_TOP_N = 2
 
 # LLM CONFIG
-LLM_DEVICE = "GPU"# "CPU"
+LLM_DEVICE = "CPU"# "GPU"
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
 #LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int4-ov"
 LLM_MAX_NEW_TOKENS = 256 # 512
@@ -132,7 +130,7 @@ Settings.llm = llm
 Settings.chunk_size = EMBEDDING_CHUNK_SIZE
 Settings.chunk_overlap = EMBEDDING_CHUNK_OVERLAP
 
-app = app = FastAPI(
+app = FastAPI(
     title="Ask Me Anything API",
     description="""
     E2E llamaindex streaming RAG lightweight models and tradeoff accuracy vs latency:
@@ -183,6 +181,6 @@ def response_streamer(question: str):
 async def query_post(request: QueryRequest):
     return StreamingResponse(response_streamer(request.question), media_type="text/event-stream")
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
 
