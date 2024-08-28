@@ -3,7 +3,16 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import asyncio
 
-app = FastAPI()
+app = FastAPI(
+    title="Ask Me Anything API",
+    description="""
+    E2E llamaindex streaming RAG lightweight models and tradeoff accuracy vs latency:
+    1. EMBEDDINGS MODEL: INT4 Quantized BAAI/bge-base-en-v1.5
+    2. LLM MODEL: phi3-mini-128k-instruct
+    3. RERANKING MODEL: BAAI/bge-reranker-base
+    Note: Swagger UI waits to complete response, use example {CURL} command in description of API for non-buffered live streaming result.
+    """,
+)
 
 class QueryRequest(BaseModel):
     question: str

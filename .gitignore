@@ -2,6 +2,8 @@ openvino_*/
 embedding_model*/
 reranking_model*/
 agents_env/
+*.pem
+*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
