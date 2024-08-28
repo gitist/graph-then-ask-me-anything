@@ -11,6 +11,14 @@ from llama_index.core import PromptTemplate
 
 import time
 import logging
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+import uvicorn
+from fastapi import FastAPI, Query
+from pydantic import BaseModel
+import logging
+import time
+from fastapi.responses import StreamingResponse
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,6 +45,16 @@ LLM_MAX_NEW_TOKENS = 256 # 512
 LLM_CONTEXT_WINDOW = 131072 #4096
 CUSTOM_SYSTEM_PROMPT = "<|system|>\nYou are an expert Q&A system that is trusted around the world.\nAlways answer the query using the provided context information, and not prior knowledge.\nSome rules to follow:\n1. Never directly reference the given context in your answer.\n2. Avoid statements like 'Based on the context, ...' or 'The context information ...' or anything along those lines.<|end|>\n"
 OV_CONFIG = { "PERFORMANCE_HINT": "LATENCY", "CACHE_DIR": ""}
+QA_PROMPT_TMPL_STR = (
+            "Context information is below.\n"
+            "---------------------\n"
+            "{context_str}\n"
+            "---------------------\n"
+            "Given the context information and not prior knowledge, answer the query. Incase case you don't know the answer say 'I don't know!'.\n"
+            "Query: {query_str}\n"
+            "Answer: "
+            )
+QA_PROMPT_TEMPLATE = PromptTemplate(QA_PROMPT_TMPL_STR)
 
 def messages_to_prompt(messages):
     prompt = ""
@@ -60,7 +78,7 @@ def messages_to_prompt(messages):
             CUSTOM_SYSTEM_PROMPT + prompt
         )
 
-    print(f"Prompt: {prompt}")
+    #print(f"Prompt: {prompt}")
     return prompt
 
 def phi_completion_to_prompt(completion):
@@ -80,7 +98,7 @@ reranker = OpenVINORerank(
     model_id_or_path=RERANKING_MODEL_NAME, 
     device=RERANKING_DEVICE,
     model_kwargs={"ov_config": OV_CONFIG, "trust_remote_code": True},
-    top_n=2
+    top_n=RERANKING_TOP_N
 )
 
 llm = OpenVINOLLM(
@@ -123,18 +141,7 @@ query_engine = vector_index.as_query_engine(
     response_mode="compact", 
     node_postprocessors=[reranker]
 )
-
-qa_prompt_tmpl_str = (
-            "Context information is below.\n"
-            "---------------------\n"
-            "{context_str}\n"
-            "---------------------\n"
-            "Given the context information and not prior knowledge, answer the query. Incase case you don't know the answer say 'I don't know!'.\n"
-            "Query: {query_str}\n"
-            "Answer: "
-            )
-qa_prompt_tmpl = PromptTemplate(qa_prompt_tmpl_str)
-query_engine.update_prompts({"response_synthesizer:text_qa_template": qa_prompt_tmpl})
+query_engine.update_prompts({"response_synthesizer:text_qa_template": QA_PROMPT_TEMPLATE})
 #print(query_engine.get_prompts())
 #exit()
 # question = "what is the base power range of xeon 6 processors?"
@@ -146,20 +153,24 @@ query_engine.update_prompts({"response_synthesizer:text_qa_template": qa_prompt_
 # end_time = time.time()
 # logging.info(f"Execution time: {end_time - start_time} seconds")
 
-try:
-    while True:
-        question = input("Enter your question (or 'q' to quit): ")
-        if question == "q":
-            break
-        
-        logging.info("Querying the engine")
-        start_time = time.time()
-        response = query_engine.query(question)
-        response.print_response_stream()
-        print("\n")
-        end_time = time.time()
-        logging.info(f"Execution time: {end_time - start_time} seconds")
-except KeyboardInterrupt:
-    logging.info("Program stopped by user")
-    exit()
+app = FastAPI()
+
+class QueryRequest(BaseModel):
+    question: str = Query(..., description="The question to be queried")
+
+def response_streamer(question: str):
+    logging.info("Querying the engine")
+    start_time = time.time()
+    streaming_response = query_engine.query(question)
+    for line in streaming_response.response_gen:
+        yield line
+    end_time = time.time()
+    yield f"\nDuration: {end_time - start_time:.2f} seconds\n"
+
+@app.post("/query")
+async def query_post(request: QueryRequest):
+    return StreamingResponse(response_streamer(request.question), media_type="text/event-stream")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
