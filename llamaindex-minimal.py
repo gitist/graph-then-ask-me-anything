@@ -21,8 +21,10 @@ import time
 from fastapi.responses import StreamingResponse
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import StreamingResponse
+import os
 
 logging.basicConfig(level=logging.INFO)
+UPLOAD_DIRECTORY = os.getcwd()
 
 # EMBEDDING CONFIG
 EMBEDDING_DEVICE = "CPU"
@@ -145,6 +147,11 @@ app = FastAPI(
 async def upload_file(file: UploadFile = File(...)):
     logging.info("Initializing VectorStoreIndex and QueryEngine")
     if file.filename.endswith('.pdf'):
+        
+        file_location = os.path.join(UPLOAD_DIRECTORY, file.filename)
+        with open(file_location, "wb") as buffer:
+            buffer.write(await file.read())
+            
         start_time = time.time()
         loader = PyMuPDFReader()
         documents = loader.load(file_path=file.filename)
@@ -180,7 +187,4 @@ def response_streamer(question: str):
 @app.post("/ask-me-anything", tags=["QnA"])
 async def query_post(request: QueryRequest):
     return StreamingResponse(response_streamer(request.question), media_type="text/event-stream")
-
-# if __name__ == "__main__":
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
 

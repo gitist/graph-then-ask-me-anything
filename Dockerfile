@@ -27,10 +27,6 @@ RUN python3 -m venv venv \
 
 # Copy the rest of the application code
 COPY llamaindex-minimal.py .
-COPY llm_config.py .
-COPY xeon6-e-cores-network-and-edge-brief.pdf .
-COPY entrypoint.sh .
-RUN chmod +x /app/entrypoint.sh
 
 # Activate the virtual environment and run the hugging-cli command
 RUN . venv/bin/activate \
