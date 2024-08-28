@@ -19,6 +19,8 @@ from pydantic import BaseModel
 import logging
 import time
 from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import StreamingResponse
 
 logging.basicConfig(level=logging.INFO)
 
@@ -130,30 +132,39 @@ Settings.llm = llm
 Settings.chunk_size = EMBEDDING_CHUNK_SIZE
 Settings.chunk_overlap = EMBEDDING_CHUNK_OVERLAP
 
-logging.info("Initializing VectorStoreIndex and QueryEngine")
-loader = PyMuPDFReader()
-documents = loader.load(file_path=PDF_TEST_FILE_PATH)
-vector_index = VectorStoreIndex.from_documents(documents)
-
-query_engine = vector_index.as_query_engine(
-    streaming=True, 
-    similarity_top_k=RERANKING_TOP_N, 
-    response_mode="compact", 
-    node_postprocessors=[reranker]
+app = app = FastAPI(
+    title="Ask Me Anything API",
+    description="""
+    E2E llamaindex streaming RAG lightweight models and tradeoff accuracy vs latency:
+    1. EMBEDDINGS MODEL: INT4 Quantized BAAI/bge-base-en-v1.5
+    2. LLM MODEL: phi3-mini-128k-instruct
+    3. RERANKING MODEL: BAAI/bge-reranker-base
+    Note: Swagger UI waits to complete response, use example {CURL} command in description of API for non-buffered live streaming result.
+    """,
 )
-query_engine.update_prompts({"response_synthesizer:text_qa_template": QA_PROMPT_TEMPLATE})
-#print(query_engine.get_prompts())
-#exit()
-# question = "what is the base power range of xeon 6 processors?"
-# logging.info("Querying the engine")
-# start_time = time.time()
-# response = query_engine.query(question)
-# response.print_response_stream()
-# print("\n")
-# end_time = time.time()
-# logging.info(f"Execution time: {end_time - start_time} seconds")
 
-app = FastAPI()
+@app.post("/upload-pdf-vector-index", tags=["Knowledge Base"])
+async def upload_file(file: UploadFile = File(...)):
+    logging.info("Initializing VectorStoreIndex and QueryEngine")
+    if file.filename.endswith('.pdf'):
+        start_time = time.time()
+        loader = PyMuPDFReader()
+        documents = loader.load(file_path=file.filename)
+        vector_index = VectorStoreIndex.from_documents(documents)
+
+        global query_engine
+        query_engine = vector_index.as_query_engine(
+            streaming=True, 
+            similarity_top_k=RERANKING_TOP_N, 
+            response_mode="compact", 
+            node_postprocessors=[reranker]
+        )
+        query_engine.update_prompts({"response_synthesizer:text_qa_template": QA_PROMPT_TEMPLATE})
+        end_time = time.time()
+        status = f"Succesfully updated vector index with data from {file.filename} in {end_time - start_time:.2f} seconds\n"
+        return {"status": status}
+    else:
+        return {"status": "error", "message": "Only PDF files are allowed."}
 
 class QueryRequest(BaseModel):
     question: str = Query(..., description="The question to be queried")
@@ -161,13 +172,14 @@ class QueryRequest(BaseModel):
 def response_streamer(question: str):
     logging.info("Querying the engine")
     start_time = time.time()
+    global query_engine
     streaming_response = query_engine.query(question)
     for line in streaming_response.response_gen:
         yield line
     end_time = time.time()
     yield f"\nDuration: {end_time - start_time:.2f} seconds\n"
 
-@app.post("/query")
+@app.post("/ask-me-anything", tags=["QnA"])
 async def query_post(request: QueryRequest):
     return StreamingResponse(response_streamer(request.question), media_type="text/event-stream")
 
