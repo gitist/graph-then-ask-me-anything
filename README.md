@@ -25,8 +25,27 @@ huggingface-cli download OpenVINO/Phi-3-mini-128k-instruct-int4-ov
 2. To switch to gpu, update LLM_DEVICE to "GPU" in llamaindex-minimal.py
 ```sh
 uvicorn llamaindex-minimal:app
+```
+3. To run via Swagger (non streaming responses), navigate to http://127.0.0.1:8000/docs
+4. To use upload api via terminal CURL:
+```sh
+curl -X 'POST' \
+  'http://127.0.0.1:8000/upload-pdf-vector-index' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@xeon6-e-cores-network-and-edge-brief.pdf;type=application/pdf'
+```
+5. To run ask-me-anything api via terminal **preferred** for streaming responses.
 
-# CNTRL-C to quit/exit
+Note: Use -N param to prevent buffer cache and see live chunked response data
+```sh
+curl -N -X 'POST' \
+  'http://127.0.0.1:8000/ask-me-anything' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "question": "What is the range of Thermal Design Power (TDP) for Intel Xeon 6 processors with E-cores?"
+}'
 ```
 
 ### Intel GPU Setup on Linux and WSL2 Linux for Ubuntu 22.04

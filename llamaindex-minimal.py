@@ -151,7 +151,7 @@ async def upload_file(file: UploadFile = File(...)):
         file_location = os.path.join(UPLOAD_DIRECTORY, file.filename)
         with open(file_location, "wb") as buffer:
             buffer.write(await file.read())
-            
+
         start_time = time.time()
         loader = PyMuPDFReader()
         documents = loader.load(file_path=file.filename)
