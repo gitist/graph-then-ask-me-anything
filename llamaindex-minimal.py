@@ -153,7 +153,7 @@ app = FastAPI(
 
 @app.post("/upload-pdf-vector-index", tags=["Knowledge Base"])
 async def upload_file(file: UploadFile = File(...)):
-    logging.info("Initializing VectorStoreIndex and QueryEngine")
+    logging.info("Initializing KnowledgeGraphIndex instead of VectorStoreIndex and QueryEngine")
     if file.filename.endswith('.pdf'):
         
         file_location = os.path.join(UPLOAD_DIRECTORY, file.filename)
@@ -163,25 +163,24 @@ async def upload_file(file: UploadFile = File(...)):
         start_time = time.time()
         loader = PyMuPDFReader()
         documents = loader.load(file_path=file.filename)
-        vector_index = VectorStoreIndex.from_documents(documents)
+        #vector_index = VectorStoreIndex.from_documents(documents)
         ##############################################################################
-        HF_TOKEN = "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"
-        embed_model = LangchainEmbedding(HuggingFaceInferenceAPIEmbeddings(api_key=HF_TOKEN,model_name="thenlper/gte-large"))
+        #embed_model = LangchainEmbedding(HuggingFaceInferenceAPIEmbeddings(api_key=HF_TOKEN,model_name="thenlper/gte-large"))
 
         graph_store = SimpleGraphStore()
         storage_context = StorageContext.from_defaults(graph_store=graph_store)
         index = KnowledgeGraphIndex.from_documents( documents=documents,
                                            max_triplets_per_chunk=3,
                                            storage_context=storage_context,
-                                           embed_model=embed_model,
-                                          include_embeddings=True)
+                                           embed_model=embedding,
+                                           include_embeddings=True)
         #query_engine = index.as_query_engine(include_text=True, response_mode ="tree_summarize", embedding_mode="hybrid", similarity_top_k=5,)
         #response = query_engine.query(message_template)
 #
         ##############################################################################
 
         global query_engine
-        query_engine = index.as_query_engine(include_text=True, response_mode ="tree_summarize", embedding_mode="hybrid", similarity_top_k=5,)
+        query_engine = index.as_query_engine(include_text=True, response_mode ="compact", embedding_mode="hybrid", similarity_top_k=RERANKING_TOP_N,)
         """
         query_engine = vector_index.as_query_engine(
             streaming=True, 
