@@ -1,4 +1,11 @@
 import openvino as ov
+#################################################################################
+from llama_index.core.graph_stores import SimpleGraphStore
+from llama_index.embeddings.langchain import LangchainEmbedding
+from langchain_community.embeddings.huggingface import HuggingFaceInferenceAPIEmbeddings
+from llama_index.core import StorageContext
+from llama_index.core import KnowledgeGraphIndex
+#################################################################################
 from llama_index.llms.openvino import OpenVINOLLM
 from llama_index.embeddings.huggingface_openvino import OpenVINOEmbedding
 from llama_index.postprocessor.openvino_rerank import OpenVINORerank
@@ -40,7 +47,8 @@ RERANKING_MODEL_NAME = "ojjsaw/reranking_model"
 RERANKING_TOP_N = 2
 
 # LLM CONFIG
-LLM_DEVICE = "CPU"# "GPU"
+#LLM_DEVICE = "CPU" #"GPU"
+LLM_DEVICE = "GPU"
 LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-128k-instruct-int4-ov"
 #LLM_MODEL_NAME = "OpenVINO/Phi-3-mini-4k-instruct-int4-ov"
 LLM_MAX_NEW_TOKENS = 256 # 512
@@ -156,14 +164,32 @@ async def upload_file(file: UploadFile = File(...)):
         loader = PyMuPDFReader()
         documents = loader.load(file_path=file.filename)
         vector_index = VectorStoreIndex.from_documents(documents)
+        ##############################################################################
+        HF_TOKEN = "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"
+        embed_model = LangchainEmbedding(HuggingFaceInferenceAPIEmbeddings(api_key=HF_TOKEN,model_name="thenlper/gte-large"))
+
+        graph_store = SimpleGraphStore()
+        storage_context = StorageContext.from_defaults(graph_store=graph_store)
+        index = KnowledgeGraphIndex.from_documents( documents=documents,
+                                           max_triplets_per_chunk=3,
+                                           storage_context=storage_context,
+                                           embed_model=embed_model,
+                                          include_embeddings=True)
+        #query_engine = index.as_query_engine(include_text=True, response_mode ="tree_summarize", embedding_mode="hybrid", similarity_top_k=5,)
+        #response = query_engine.query(message_template)
+#
+        ##############################################################################
 
         global query_engine
+        query_engine = index.as_query_engine(include_text=True, response_mode ="tree_summarize", embedding_mode="hybrid", similarity_top_k=5,)
+        """
         query_engine = vector_index.as_query_engine(
             streaming=True, 
             similarity_top_k=RERANKING_TOP_N, 
             response_mode="compact", 
             node_postprocessors=[reranker]
         )
+        """
         query_engine.update_prompts({"response_synthesizer:text_qa_template": QA_PROMPT_TEMPLATE})
         end_time = time.time()
         status = f"Succesfully updated vector index with data from {file.filename} in {end_time - start_time:.2f} seconds\n"
@@ -179,7 +205,8 @@ def response_streamer(question: str):
     start_time = time.time()
     global query_engine
     streaming_response = query_engine.query(question)
-    for line in streaming_response.response_gen:
+    #for line in streaming_response.response_gen:
+    for line in streaming_response.response:
         yield line
     end_time = time.time()
     yield f"\nDuration: {end_time - start_time:.2f} seconds\n"
